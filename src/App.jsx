@@ -107,7 +107,7 @@ export default function App() {
                 <main style={{ flex: 1, padding: "1rem" }}>
                   <iframe
                     title="Cody Chat"
-                    src="https://embed.cody.bot/9edc7c13-386b-4271-bd76-6b55ccc036ef"
+                    src="https://embed.cody.bot/9edc8697-a7e8-4862-b435-5c604ba387bb"
                     style={{
                       width: "100%",
                       height: "100%",
