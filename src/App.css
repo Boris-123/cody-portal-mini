@@ -2,7 +2,7 @@
 
 /* 1. 登录页面整体背景 */
 :root {
-  --login-bg: url("https://static.wixstatic.com/media/5bfb6f_b4c53ed3cc1c426aa8ea180798bc870f.jpeg/v1/fill/w_1904,h_1050,al_c,q_90,enc_avif,quality_auto/5bfb6f_b4c53ed3cc1c426aa8ea180798bc870f.jpeg0");
+  --login-bg: url("https://www.harrylau.com/wp-content/uploads/2013/07/singapore-golden-sand-night-view.jpg");
   /* ↑ 将上面 URL 替换为你选中图像的真实链接，如 turn0image0 对应的 URL */
 }
 
