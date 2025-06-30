@@ -46,7 +46,7 @@ export default async function handler(req, res) {
       location: ip,
     });
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, source: "Mini Version" });
   } catch (err) {
     console.error("track-login error:", err);
     return res.status(500).json({ error: "Internal Server Error" });
