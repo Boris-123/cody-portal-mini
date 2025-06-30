@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const events = await db
-        .collection("login_events")
+        .collection("mini_login_events")
         .find({})
         .sort({ timestamp: -1 })
         .toArray();
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing userId" });
     }
     try {
-      await db.collection("login_events").deleteMany({ userId });
+      await db.collection("mini_login_events").deleteMany({ userId });
       return res.status(200).json({ success: true });
     } catch (err) {
       console.error("admin-logins DELETE error:", err);
