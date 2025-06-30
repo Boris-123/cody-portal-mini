@@ -56,7 +56,7 @@ export default function App() {
         ) 
         return;
 
-    const res = await fetch("/api/track-login", {
+    const res = await fetch("/api/track-login-mini", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
