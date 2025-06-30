@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   // GET: 拉 settings 集合里 _id = "maxUsers" 的 value（数值），默认 10
   if (req.method === "GET") {
     try {
-      const doc = await db.collection("settings").findOne({ _id: "maxUsers" });
+      const doc = await db.collection("mini_settings").findOne({ _id: "maxUsers" });
       const max = doc ? doc.value : 10;
       return res.status(200).json({ max });
     } catch (err) {
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid max value" });
     }
     try {
-      await db.collection("settings").updateOne(
+      await db.collection("mini_settings").updateOne(
         { _id: "maxUsers" },
         { $set: { value: max } },
         { upsert: true }
