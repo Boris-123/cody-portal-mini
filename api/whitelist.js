@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   // GET: 拉取 settings 集合里 _id = "whitelist" 的 value（数组），如果没有，就空数组
   if (req.method === "GET") {
     try {
-      const doc = await db.collection("settings").findOne({ _id: "whitelist" });
+      const doc = await db.collection("mini_settings").findOne({ _id: "whitelist" });
       const list = doc ? doc.value : [];
       return res.status(200).json({ whitelist: list });
     } catch (err) {
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid whitelist format" });
     }
     try {
-      await db.collection("settings").updateOne(
+      await db.collection("mini_settings").updateOne(
         { _id: "whitelist" },
         { $set: { value: whitelist } },
         { upsert: true }
