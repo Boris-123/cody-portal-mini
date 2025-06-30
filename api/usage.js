@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     try {
     const client = await connectToDatabase();
     const db = client.db();
-    await db.collection("usage_events").insertOne({
+    await db.collection("mini_usage_events").insertOne({
         userId,
         email,
         message: message || "",
