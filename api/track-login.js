@@ -13,24 +13,24 @@ export default async function handler(req, res) {
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
     req.socket.remoteAddress;
   const ts = when ? new Date(when) : new Date();
+  const em = email.toLowerCase();
 
   try {
     const { db } = await connectToDatabase();
-    const em = email.toLowerCase();
 
-    /* --------- 黑名单 ---------- */
-    if (await db.collection("blocked_emails").findOne({ _id: em })) {
+    /* ───── 1. BLOCK LIST ───── */
+    if (await db.collection("mini_blocked_emails").findOne({ _id: em })) {
       return res.status(403).json({ error: "This account is blocked." });
     }
 
-    /* --------- 计算人数 ---------- */
-    const uniqueEmails = await db.collection("login_events").distinct("email");
+    /* ───── 2. MAX-USERS CAP ───── */
+    const uniqueEmails = await db.collection("mini_login_events").distinct("email");
     const uniqueCount = uniqueEmails.length;
 
     const setting = await db
-      .collection("settings")
-      .findOne({ _id: "maxusers" });
-    const maxUsers = setting ? setting.value : 10;
+      .collection("mini_settings")
+      .findOne({ _id: "maxUsers" });
+    const maxUsers = setting ? setting.value : 25;
 
     if (!uniqueEmails.includes(em) && uniqueCount >= maxUsers) {
       return res
@@ -38,8 +38,8 @@ export default async function handler(req, res) {
         .json({ error: `User limit reached (${maxUsers}).` });
     }
 
-    /* --------- 写入记录 ---------- */
-    await db.collection("login_events").insertOne({
+    /* ───── 3. WRITE LOGIN EVENT ───── */
+    await db.collection("mini_login_events").insertOne({
       userId,
       email: em,
       timestamp: ts,
