@@ -1,11 +1,37 @@
 // src/App.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 
 import CompanyLogo from "./assets/logolatest.jpg";
 import Admin from "./Admin";
 import "./App.css"; // 确保引入了上面提到的 .login-container、.login-card 等样式
+
+function RequireAdmin({ children }) {
+  const { isAuthenticated, user } = useAuth0();
+  const [allowed, setAllowed] = useState(null);  // null = loading
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    (async () => {
+      try {
+        const r   = await fetch("/api/whitelist");
+        const j   = await r.json();
+        const arr = (j.whitelist || []).map((e) => e.toLowerCase());
+        setAllowed(arr.length === 0 || arr.includes(user.email.toLowerCase()));
+      } catch {
+        setAllowed(false);                         // safest default
+      }
+    })();
+  }, [isAuthenticated, user]);
+
+  if (!isAuthenticated)      return <Navigate to="/" replace />;
+  if (allowed === null)      return <p style={{ padding: 40 }}>Checking admin rights…</p>;
+  if (allowed === false)     return <Navigate to="/" replace />;
+
+  return children; // ✅ user is on whitelist (or list empty)
+}
 
 export default function App() {
   const {
@@ -16,6 +42,50 @@ export default function App() {
     logout,
     error,
   } = useAuth0();
+  const [isBlocked, setIsBlocked] = useState(false);
+
+
+  useEffect(() => {
+  const trackLogin = async () => {
+    if (!isAuthenticated || !user) return;
+
+    const res = await fetch("/api/track-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: user.email,
+        userId: user.sub,
+        when: new Date().toISOString(),
+      }),
+    });
+
+    if (res.status === 403) {
+      setIsBlocked(true);
+    }
+  };
+
+  trackLogin(); // ✅ You must call it
+}, [isAuthenticated, user]);
+//blocked page
+  if (isBlocked) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <h2 style={{ color: "red" }}>Access Denied</h2>
+          <p>Your email has been blocked or the user limit has been exceeded.</p>
+          <button
+            className="login-button"
+            onClick={() => {
+            logout({ logoutParams: { returnTo: window.location.origin } });
+          }}
+          >
+            Log Out and Switch Account
+      </button>
+
+        </div>
+      </div>
+    );
+  }
 
   // 1. 正在加载
   if (isLoading) {
@@ -126,7 +196,10 @@ export default function App() {
           访问 "/admin" 时，渲染你当前写好的 Admin.jsx，
           暂时不做角色校验，后续再加入。
         */}
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<RequireAdmin>
+                                        <Admin />
+                                        </RequireAdmin>
+                                      } />
 
         {/* 其他路径都跳回 "/" */}
         <Route path="*" element={<Navigate to="/" />} />
