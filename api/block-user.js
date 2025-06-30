@@ -1,48 +1,30 @@
-// api/block-user.js
+// api/block-user.js      ← route:  POST /api/block-user
 import { connectToDatabase } from "../src/utils/mongoDB.js";
 
 export default async function handler(req, res) {
-  const { method } = req;
-
-  if (!["POST", "DELETE", "GET"].includes(method))
+  if (req.method !== "POST")
     return res.status(405).json({ error: "Method Not Allowed" });
 
-  const { email } = req.body || req.query || {};
-  const em = email ? email.toLowerCase() : null;
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Missing email" });
+  const em = email.toLowerCase();
 
   try {
     const { db } = await connectToDatabase();
-    const col = db.collection("blocked_emails");
 
-    /* ============ POST -> Block ============ */
-    if (method === "POST") {
-      if (!em) return res.status(400).json({ error: "Missing email" });
+    /* upsert into blacklist */
+    await db.collection("mini_blocked_emails").updateOne(
+      { _id: em },
+      { $set: { blockedAt: new Date() } },
+      { upsert: true }
+    );
 
-      // upsert 到黑名单
-      await col.updateOne(
-        { _id: em },
-        { $set: { blockedAt: new Date() } },
-        { upsert: true }
-      );
-      // 清理 login_events，立即释放名额
-      await db.collection("login_events").deleteMany({ email: em });
-      return res.status(200).json({ success: true });
-    }
+    /* immediately purge login events so slot is freed */
+    await db.collection("mini_login_events").deleteMany({ email: em });
 
-    /* ============ DELETE -> Unblock ============ */
-    if (method === "DELETE") {
-      if (!em) return res.status(400).json({ error: "Missing email" });
-
-      await col.deleteOne({ _id: em });
-      return res.status(200).json({ success: true });
-    }
-
-    /* ============ GET -> 列表 ============ */
-    // 返回形如 { blocked: ["a@x.com", "b@x.com"] }
-    const docs = await col.find({}).toArray();
-    return res.status(200).json({ blocked: docs.map((d) => d._id) });
+    return res.status(200).json({ success: true });
   } catch (err) {
-    console.error("block-user error:", err);
+    console.error("POST /api/block-user failed:", err);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
